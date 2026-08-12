@@ -1,23 +1,21 @@
-# StatusFlow 狀態列
+# StatusFlow
 
-一個給在家工作者使用的原生 macOS Menu Bar App，用來明確區分「工作、休息、學習」三種狀態。
+一款原生 macOS Menu Bar App，協助你切換「工作、休息、學習」狀態，掌握每天的時間分配。
 
-## 功能
+## 重點功能
 
-- Menu Bar 顯示目前狀態與累計時間
-- 工作、休息、學習一鍵切換
-- 今日各狀態時間統計
-- App 內建最近 7 天報告與長條圖
-- 可移動、永遠置頂的半透明懸浮膠囊
-- 可在設定中調整懸浮視窗的透明度與大小
-- 狀態紀錄僅儲存在本機
-- 關閉再開啟後接續目前狀態
+- 一鍵切換工作、休息與學習狀態
+- Menu Bar 即時顯示目前狀態與累計時間
+- 查看今日統計與最近 7 天報告
+- 可移動、永遠置頂的懸浮膠囊
+- 自訂懸浮視窗的透明度與大小
+- 紀錄只儲存在本機，重新開啟後接續計時
 
 ## 執行方式
 
 1. 使用 macOS 14 或更新版本。
 2. 安裝 Xcode 15 或更新版本。
-3. 在 Finder 中雙擊 `Package.swift`，或在 Xcode 選擇 **File → Open** 後開啟 `StatusFlow` 資料夾。
+3. 使用 Xcode 開啟 `Package.swift`。
 4. Scheme 選擇 `StatusFlow`，執行目的地選擇 **My Mac**。
 5. 按 `⌘R` 執行。
 
@@ -27,15 +25,9 @@
 
 `~/.StatusFlow/sessions.json`
 
-程式會自動建立尚不存在的資料夾。如果電腦上已有前兩版的紀錄，第一次啟動新版時會依序檢查：
+程式會自動建立所需資料夾。若有舊版紀錄，首次啟動時會從下列位置尋找並搬移：
 
 - `~/SideProject/StatusFlow/data/sessions.json`
 - `~/Library/Application Support/StatusFlow/sessions.json`
 
 找到後會自動讀取並寫入新位置。
-
-## 下一版建議
-
-- 自訂番茄鐘與通知
-- CSV 匯出
-- 登入時自動啟動

@@ -27,7 +27,7 @@ struct StatusFlowApp: App {
 
         Settings {
             SettingsView(store: store, floatingPanel: floatingPanel)
-                .frame(width: 420, height: 390)
+                .frame(width: 460, height: 520)
         }
     }
 }

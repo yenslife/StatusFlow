@@ -74,7 +74,6 @@ final class FloatingPanelController: ObservableObject {
 
     private func updatePanelAppearance(_ panel: NSPanel? = nil) {
         guard let panel = panel ?? self.panel else { return }
-        panel.alphaValue = opacity
         panel.setContentSize(FloatingPillView.size(scale: scale))
     }
 }
@@ -84,35 +83,38 @@ struct FloatingPillView: View {
 
     @ObservedObject var store: ActivityStore
     @ObservedObject var settings: FloatingPanelController
+    var scaleMultiplier = 1.0
+
+    private var renderScale: Double {
+        settings.scale * scaleMultiplier
+    }
 
     static func size(scale: Double) -> CGSize {
         CGSize(width: baseSize.width * scale, height: baseSize.height * scale)
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 12 * renderScale) {
             Image(systemName: store.currentState.symbol)
-                .font(.title2)
+                .font(.system(size: 20 * renderScale, weight: .semibold))
                 .foregroundStyle(store.currentState.color)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 2 * renderScale) {
                 Text(store.currentState.title)
-                    .font(.headline)
+                    .font(.system(size: 13 * renderScale, weight: .semibold))
                 Text(ActivityStore.clockDuration(store.currentElapsed))
-                    .font(.system(.caption, design: .monospaced))
+                    .font(.system(size: 11 * renderScale, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
             Spacer()
         }
-        .padding(.horizontal, 18)
-        .frame(width: Self.baseSize.width, height: Self.baseSize.height)
-        .background(.ultraThinMaterial)
+        .padding(.horizontal, 18 * renderScale)
+        .frame(
+            width: Self.size(scale: renderScale).width,
+            height: Self.size(scale: renderScale).height
+        )
+        .background(.ultraThinMaterial.opacity(settings.opacity))
         .clipShape(Capsule())
         .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
-        .scaleEffect(settings.scale)
-        .frame(
-            width: Self.size(scale: settings.scale).width,
-            height: Self.size(scale: settings.scale).height
-        )
     }
 }
 

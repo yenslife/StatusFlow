@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
     @ObservedObject var store: ActivityStore
     @ObservedObject var floatingPanel: FloatingPanelController
 
@@ -70,6 +71,14 @@ struct MenuBarView: View {
                     openWindow(id: "report")
                     NSApplication.shared.activate(ignoringOtherApps: true)
                 }
+                Button {
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                    openSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .help("設定")
+                .accessibilityLabel("設定")
                 Spacer()
                 Button("結束") { NSApplication.shared.terminate(nil) }
             }
