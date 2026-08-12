@@ -74,14 +74,13 @@ final class FloatingPanelController: ObservableObject {
 
     private func updatePanelAppearance(_ panel: NSPanel? = nil) {
         guard let panel = panel ?? self.panel else { return }
-        panel.setContentSize(FloatingPillView.size(scale: scale, includesStateButton: true))
+        panel.setContentSize(FloatingPillView.size(scale: scale))
     }
 }
 
 struct FloatingPillView: View {
     static let baseSize = CGSize(width: 220, height: 62)
-    static let buttonSpacing = 8.0
-    static let buttonSize = 42.0
+    static let buttonSize = 30.0
 
     @ObservedObject var store: ActivityStore
     @ObservedObject var settings: FloatingPanelController
@@ -92,29 +91,29 @@ struct FloatingPillView: View {
         settings.scale * scaleMultiplier
     }
 
-    static func size(scale: Double, includesStateButton: Bool = false) -> CGSize {
-        let controlsWidth = includesStateButton ? buttonSpacing + buttonSize : 0
-        return CGSize(
-            width: (baseSize.width + controlsWidth) * scale,
-            height: baseSize.height * scale
-        )
+    static func size(scale: Double) -> CGSize {
+        CGSize(width: baseSize.width * scale, height: baseSize.height * scale)
     }
 
     var body: some View {
-        HStack(spacing: Self.buttonSpacing * renderScale) {
-            pillContent
+        ZStack(alignment: .trailing) {
+            pillBackground
 
             if allowsStateSelection {
                 stateMenu
                 .frame(
-                    width: Self.buttonSize * renderScale,
-                    height: Self.buttonSize * renderScale
+                    width: max(32, Self.buttonSize * renderScale),
+                    height: max(32, Self.buttonSize * renderScale)
                 )
+                .padding(.trailing, 12 * renderScale)
             }
         }
+        .background(.ultraThinMaterial.opacity(settings.opacity))
+        .clipShape(Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
     }
 
-    private var pillContent: some View {
+    private var pillBackground: some View {
         HStack(spacing: 12 * renderScale) {
             Image(systemName: store.currentState.symbol)
                 .font(.system(size: 20 * renderScale, weight: .semibold))
@@ -128,14 +127,12 @@ struct FloatingPillView: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 18 * renderScale)
+        .padding(.leading, 18 * renderScale)
+        .padding(.trailing, (allowsStateSelection ? 54 : 18) * renderScale)
         .frame(
             width: Self.size(scale: renderScale).width,
             height: Self.size(scale: renderScale).height
         )
-        .background(.ultraThinMaterial.opacity(settings.opacity))
-        .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
         .contentShape(Capsule())
     }
 
@@ -150,12 +147,15 @@ struct FloatingPillView: View {
                 .disabled(state == store.currentState)
             }
         } label: {
-            Image(systemName: "arrow.triangle.2.circlepath")
-                .font(.system(size: 15 * renderScale, weight: .semibold))
-                .foregroundStyle(store.currentState.color)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.ultraThinMaterial.opacity(settings.opacity), in: Circle())
-                .overlay(Circle().strokeBorder(.white.opacity(0.18)))
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: 10 * renderScale, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(
+                    width: Self.buttonSize * renderScale,
+                    height: Self.buttonSize * renderScale
+                )
+                .background(store.currentState.color.opacity(0.16), in: Circle())
+                .overlay(Circle().strokeBorder(store.currentState.color.opacity(0.35)))
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
