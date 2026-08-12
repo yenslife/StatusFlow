@@ -74,12 +74,14 @@ final class FloatingPanelController: ObservableObject {
 
     private func updatePanelAppearance(_ panel: NSPanel? = nil) {
         guard let panel = panel ?? self.panel else { return }
-        panel.setContentSize(FloatingPillView.size(scale: scale))
+        panel.setContentSize(FloatingPillView.size(scale: scale, includesStateButton: true))
     }
 }
 
 struct FloatingPillView: View {
     static let baseSize = CGSize(width: 220, height: 62)
+    static let buttonSpacing = 8.0
+    static let buttonSize = 42.0
 
     @ObservedObject var store: ActivityStore
     @ObservedObject var settings: FloatingPanelController
@@ -90,30 +92,26 @@ struct FloatingPillView: View {
         settings.scale * scaleMultiplier
     }
 
-    static func size(scale: Double) -> CGSize {
-        CGSize(width: baseSize.width * scale, height: baseSize.height * scale)
+    static func size(scale: Double, includesStateButton: Bool = false) -> CGSize {
+        let controlsWidth = includesStateButton ? buttonSpacing + buttonSize : 0
+        return CGSize(
+            width: (baseSize.width + controlsWidth) * scale,
+            height: baseSize.height * scale
+        )
     }
 
     var body: some View {
-        ZStack {
+        HStack(spacing: Self.buttonSpacing * renderScale) {
             pillContent
 
             if allowsStateSelection {
-                PillInteractionView(
-                    currentState: store.currentState,
-                    onSelect: store.switchTo
-                )
+                stateMenu
                 .frame(
-                    width: Self.size(scale: renderScale).width,
-                    height: Self.size(scale: renderScale).height
+                    width: Self.buttonSize * renderScale,
+                    height: Self.buttonSize * renderScale
                 )
-                .help("切換狀態")
-                .accessibilityLabel("目前是\(store.currentState.title)，點擊切換狀態")
             }
         }
-        .background(.ultraThinMaterial.opacity(settings.opacity))
-        .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
     }
 
     private var pillContent: some View {
@@ -135,71 +133,35 @@ struct FloatingPillView: View {
             width: Self.size(scale: renderScale).width,
             height: Self.size(scale: renderScale).height
         )
+        .background(.ultraThinMaterial.opacity(settings.opacity))
+        .clipShape(Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
         .contentShape(Capsule())
     }
 
-}
-
-private struct PillInteractionView: NSViewRepresentable {
-    let currentState: ActivityState
-    let onSelect: (ActivityState) -> Void
-
-    func makeNSView(context: Context) -> PillInteractionNSView {
-        PillInteractionNSView()
-    }
-
-    func updateNSView(_ view: PillInteractionNSView, context: Context) {
-        view.currentState = currentState
-        view.onSelect = onSelect
-    }
-}
-
-private final class PillInteractionNSView: NSView {
-    var currentState = ActivityState.work
-    var onSelect: ((ActivityState) -> Void)?
-    private var mouseDownEvent: NSEvent?
-    private var isDragging = false
-
-    override func mouseDown(with event: NSEvent) {
-        mouseDownEvent = event
-        isDragging = false
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        guard !isDragging, let mouseDownEvent else { return }
-        isDragging = true
-        window?.performDrag(with: mouseDownEvent)
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        defer {
-            mouseDownEvent = nil
-            isDragging = false
+    private var stateMenu: some View {
+        Menu {
+            ForEach(ActivityState.allCases) { state in
+                Button {
+                    store.switchTo(state)
+                } label: {
+                    Label(state.title, systemImage: state == store.currentState ? "checkmark" : state.symbol)
+                }
+                .disabled(state == store.currentState)
+            }
+        } label: {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 15 * renderScale, weight: .semibold))
+                .foregroundStyle(store.currentState.color)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.ultraThinMaterial.opacity(settings.opacity), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.18)))
         }
-        guard !isDragging else { return }
-
-        let menu = NSMenu()
-        for state in ActivityState.allCases {
-            let item = NSMenuItem(
-                title: state.title,
-                action: #selector(selectState(_:)),
-                keyEquivalent: ""
-            )
-            item.target = self
-            item.representedObject = state.rawValue
-            item.state = state == currentState ? .on : .off
-            item.isEnabled = state != currentState
-            menu.addItem(item)
-        }
-        menu.popUp(positioning: nil, at: NSPoint(x: bounds.midX, y: bounds.minY), in: self)
-    }
-
-    @objc private func selectState(_ sender: NSMenuItem) {
-        guard
-            let rawValue = sender.representedObject as? String,
-            let state = ActivityState(rawValue: rawValue)
-        else { return }
-        onSelect?(state)
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+        .help("切換狀態")
+        .accessibilityLabel("切換目前狀態")
     }
 }
 
