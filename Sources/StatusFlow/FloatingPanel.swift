@@ -100,13 +100,6 @@ struct FloatingPillView: View {
             pillBackground
 
             if allowsStateSelection {
-                FloatingPillDragArea()
-                    .frame(
-                        width: (Self.baseSize.width - 54) * renderScale,
-                        height: Self.baseSize.height * renderScale
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
                 stateMenu
                 .frame(
                     width: max(32, Self.buttonSize * renderScale),
@@ -169,29 +162,6 @@ struct FloatingPillView: View {
         .buttonStyle(.plain)
         .help("切換狀態")
         .accessibilityLabel("切換目前狀態")
-    }
-}
-
-private struct FloatingPillDragArea: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        DragView()
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        nsView.window?.invalidateCursorRects(for: nsView)
-    }
-
-    private final class DragView: NSView {
-        override func resetCursorRects() {
-            super.resetCursorRects()
-            addCursorRect(bounds, cursor: .openHand)
-        }
-
-        override func mouseDown(with event: NSEvent) {
-            NSCursor.closedHand.push()
-            defer { NSCursor.pop() }
-            window?.performDrag(with: event)
-        }
     }
 }
 
