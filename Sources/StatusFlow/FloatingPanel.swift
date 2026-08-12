@@ -95,23 +95,20 @@ struct FloatingPillView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .trailing) {
+        ZStack {
+            pillContent
+
             if allowsStateSelection {
-                Menu {
-                    stateMenu
-                } label: {
-                    pillContent
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .buttonStyle(.plain)
+                PillInteractionView(
+                    currentState: store.currentState,
+                    onSelect: store.switchTo
+                )
+                .frame(
+                    width: Self.size(scale: renderScale).width,
+                    height: Self.size(scale: renderScale).height
+                )
                 .help("切換狀態")
                 .accessibilityLabel("目前是\(store.currentState.title)，點擊切換狀態")
-
-                WindowDragHandle(scale: renderScale)
-                    .padding(.trailing, 10 * renderScale)
-            } else {
-                pillContent
             }
         }
         .background(.ultraThinMaterial.opacity(settings.opacity))
@@ -132,12 +129,6 @@ struct FloatingPillView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if allowsStateSelection {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 9 * renderScale, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-                    .padding(.trailing, 18 * renderScale)
-            }
         }
         .padding(.horizontal, 18 * renderScale)
         .frame(
@@ -147,58 +138,68 @@ struct FloatingPillView: View {
         .contentShape(Capsule())
     }
 
-    @ViewBuilder
-    private var stateMenu: some View {
-        ForEach(ActivityState.allCases) { state in
-            Button {
-                store.switchTo(state)
-            } label: {
-                if state == store.currentState {
-                    Label(state.title, systemImage: "checkmark")
-                } else {
-                    Text(state.title)
-                }
-            }
-            .disabled(state == store.currentState)
-        }
+}
+
+private struct PillInteractionView: NSViewRepresentable {
+    let currentState: ActivityState
+    let onSelect: (ActivityState) -> Void
+
+    func makeNSView(context: Context) -> PillInteractionNSView {
+        PillInteractionNSView()
+    }
+
+    func updateNSView(_ view: PillInteractionNSView, context: Context) {
+        view.currentState = currentState
+        view.onSelect = onSelect
     }
 }
 
-private struct WindowDragHandle: NSViewRepresentable {
-    let scale: Double
+private final class PillInteractionNSView: NSView {
+    var currentState = ActivityState.work
+    var onSelect: ((ActivityState) -> Void)?
+    private var mouseDownEvent: NSEvent?
+    private var isDragging = false
 
-    func makeNSView(context: Context) -> DragHandleView {
-        DragHandleView()
-    }
-
-    func updateNSView(_ view: DragHandleView, context: Context) {
-        view.toolTip = "拖移懸浮視窗"
-        view.setAccessibilityLabel("拖移懸浮視窗")
-    }
-
-    func sizeThatFits(
-        _ proposal: ProposedViewSize,
-        nsView: DragHandleView,
-        context: Context
-    ) -> CGSize? {
-        CGSize(width: 18 * scale, height: 34 * scale)
-    }
-}
-
-private final class DragHandleView: NSView {
     override func mouseDown(with event: NSEvent) {
-        window?.performDrag(with: event)
+        mouseDownEvent = event
+        isDragging = false
     }
 
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        NSColor.tertiaryLabelColor.setFill()
-        let dotSize = max(1.5, bounds.width * 0.12)
-        let x = bounds.midX - dotSize / 2
-        for offset in [-0.22, 0, 0.22] {
-            let y = bounds.midY + bounds.height * offset - dotSize / 2
-            NSBezierPath(ovalIn: NSRect(x: x, y: y, width: dotSize, height: dotSize)).fill()
+    override func mouseDragged(with event: NSEvent) {
+        guard !isDragging, let mouseDownEvent else { return }
+        isDragging = true
+        window?.performDrag(with: mouseDownEvent)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        defer {
+            mouseDownEvent = nil
+            isDragging = false
         }
+        guard !isDragging else { return }
+
+        let menu = NSMenu()
+        for state in ActivityState.allCases {
+            let item = NSMenuItem(
+                title: state.title,
+                action: #selector(selectState(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = state.rawValue
+            item.state = state == currentState ? .on : .off
+            item.isEnabled = state != currentState
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: bounds.midX, y: bounds.minY), in: self)
+    }
+
+    @objc private func selectState(_ sender: NSMenuItem) {
+        guard
+            let rawValue = sender.representedObject as? String,
+            let state = ActivityState(rawValue: rawValue)
+        else { return }
+        onSelect?(state)
     }
 }
 
