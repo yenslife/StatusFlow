@@ -28,17 +28,17 @@
 執行打包腳本會建立支援 Apple Silicon 與 Intel Mac 的 `.app`，以及可拖入 Applications 的 `.dmg`：
 
 ```bash
-./scripts/package-release.sh 1.0.0
+./scripts/package-release.sh v0.0.1
 ```
 
-產物位於 `dist/StatusFlow-1.0.0.dmg`。
+產物位於 `dist/StatusFlow-v0.0.1.dmg`。
 
 若要公開發佈並避免 Gatekeeper 警告，需使用 Apple Developer 的 Developer ID 憑證簽署與 Apple 公證（notarization）：
 
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
 NOTARY_PROFILE="notary-profile" \
-./scripts/package-release.sh 1.0.0
+./scripts/package-release.sh v0.0.1
 ```
 
 ## 本機資料位置

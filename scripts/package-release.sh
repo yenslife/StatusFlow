@@ -3,12 +3,13 @@
 set -euo pipefail
 
 APP_NAME="StatusFlow"
-VERSION="${1:-1.0.0}"
+RELEASE_VERSION="${1:-v0.0.1}"
+APP_VERSION="${RELEASE_VERSION#v}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DIST_DIR="$PROJECT_DIR/dist"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
-DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION.dmg"
+DMG_PATH="$DIST_DIR/$APP_NAME-v$APP_VERSION.dmg"
 ICON_SOURCE="$PROJECT_DIR/Assets/AppIcon/statusflow-icon.png"
 
 if [[ -n "${CODESIGN_IDENTITY:-}" && -z "${NOTARY_PROFILE:-}" ]] || \
@@ -47,7 +48,7 @@ sips -z 512 512 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
 sips -z 1024 1024 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_512x512@2x.png" >/dev/null
 iconutil -c icns "$ICONSET_DIR" -o "$APP_DIR/Contents/Resources/$APP_NAME.icns"
 
-plutil -replace CFBundleShortVersionString -string "$VERSION" "$APP_DIR/Contents/Info.plist"
+plutil -replace CFBundleShortVersionString -string "$APP_VERSION" "$APP_DIR/Contents/Info.plist"
 plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "$APP_DIR/Contents/Info.plist"
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
