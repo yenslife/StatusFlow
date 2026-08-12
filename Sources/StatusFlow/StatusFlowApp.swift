@@ -26,8 +26,8 @@ struct StatusFlowApp: App {
         .defaultSize(width: 760, height: 540)
 
         Settings {
-            SettingsView(store: store)
-                .frame(width: 420, height: 230)
+            SettingsView(store: store, floatingPanel: floatingPanel)
+                .frame(width: 420, height: 390)
         }
     }
 }
