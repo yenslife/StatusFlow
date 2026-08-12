@@ -57,7 +57,8 @@ struct SettingsView: View {
             FloatingPillView(
                 store: store,
                 settings: floatingPanel,
-                scaleMultiplier: 0.55
+                scaleMultiplier: 0.55,
+                allowsStateSelection: false
             )
             .frame(maxWidth: .infinity)
             .frame(height: 76)

@@ -26,19 +26,12 @@ struct MenuBarView: View {
 
             HStack(spacing: 8) {
                 ForEach(ActivityState.allCases) { state in
-                    Button {
+                    StateButton(
+                        state: state,
+                        isSelected: store.currentState == state
+                    ) {
                         store.switchTo(state)
-                    } label: {
-                        VStack(spacing: 6) {
-                            Image(systemName: state.symbol)
-                            Text(state.title)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(store.currentState == state ? state.color.opacity(0.18) : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .buttonStyle(.plain)
                 }
             }
 
@@ -84,5 +77,34 @@ struct MenuBarView: View {
             }
         }
         .padding(16)
+    }
+}
+
+private struct StateButton: View {
+    let state: ActivityState
+    let isSelected: Bool
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: state.symbol)
+                Text(state.title)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .background(backgroundColor)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .accessibilityLabel("切換為\(state.title)")
+    }
+
+    private var backgroundColor: Color {
+        if isSelected { return state.color.opacity(0.2) }
+        return isHovered ? Color.primary.opacity(0.07) : .clear
     }
 }
