@@ -25,9 +25,9 @@ enum ActivityState: String, Codable, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .work: .blue
-        case .rest: .green
-        case .study: .orange
+        case .work: Color(red: 97 / 255, green: 129 / 255, blue: 155 / 255)
+        case .rest: Color(red: 235 / 255, green: 116 / 255, blue: 93 / 255)
+        case .study: Color(red: 210 / 255, green: 147 / 255, blue: 54 / 255)
         }
     }
 }

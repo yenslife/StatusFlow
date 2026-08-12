@@ -8,6 +8,8 @@
     <string>StatusFlow</string>
     <key>CFBundleIdentifier</key>
     <string>com.yenslife.StatusFlow</string>
+    <key>CFBundleIconFile</key>
+    <string>StatusFlow.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

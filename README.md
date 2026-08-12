@@ -1,5 +1,7 @@
 # StatusFlow
 
+![StatusFlow 封面](Assets/statusflow-cover.png)
+
 一款原生 macOS Menu Bar App，協助你切換「工作、休息、學習」狀態，掌握每天的時間分配。
 
 ## 重點功能
