@@ -36,21 +36,51 @@ final class ActivityStore: ObservableObject {
 
     var currentState: ActivityState { currentSession.state }
 
+    var isPaused: Bool {
+        currentSession.pauses?.contains(where: { $0.endedAt == nil }) == true
+    }
+
     var currentElapsed: TimeInterval {
-        max(0, now.timeIntervalSince(currentSession.startedAt))
+        let session = currentSession
+        let elapsed = now.timeIntervalSince(session.startedAt)
+        let paused = (session.pauses ?? []).reduce(0) { total, pause in
+            total + max(0, (pause.endedAt ?? now).timeIntervalSince(pause.startedAt))
+        }
+        return max(0, elapsed - paused)
     }
 
     var menuBarTitle: String {
-        "\(currentState.title) \(Self.shortDuration(currentElapsed))"
+        "\(currentState.title) \(isPaused ? "暫停" : Self.shortDuration(currentElapsed))"
     }
 
     func switchTo(_ state: ActivityState) {
         guard state != currentState else { return }
         let date = Date()
+        let pauseStartedAt = currentSession.pauses?.last(where: { $0.endedAt == nil })?.startedAt
         if let index = sessions.lastIndex(where: { $0.endedAt == nil }) {
-            sessions[index].endedAt = date
+            sessions[index].endedAt = pauseStartedAt ?? date
         }
-        sessions.append(ActivitySession(state: state, startedAt: date))
+        sessions.append(
+            ActivitySession(
+                state: state,
+                startedAt: date,
+                pauses: pauseStartedAt == nil ? nil : [ActivityPause(startedAt: date)]
+            )
+        )
+        now = date
+        save()
+    }
+
+    func togglePause() {
+        guard let index = sessions.lastIndex(where: { $0.endedAt == nil }) else { return }
+        let date = Date()
+        var pauses = sessions[index].pauses ?? []
+        if let pauseIndex = pauses.lastIndex(where: { $0.endedAt == nil }) {
+            pauses[pauseIndex].endedAt = date
+        } else {
+            pauses.append(ActivityPause(startedAt: date))
+        }
+        sessions[index].pauses = pauses
         now = date
         save()
     }
@@ -68,7 +98,12 @@ final class ActivityStore: ObservableObject {
             .reduce(0) { total, session in
                 let start = max(session.startedAt, startOfDay)
                 let end = min(session.endedAt ?? now, endOfDay)
-                return total + max(0, end.timeIntervalSince(start))
+                let paused = (session.pauses ?? []).reduce(0) { pausedTotal, pause in
+                    let pauseStart = max(max(pause.startedAt, startOfDay), session.startedAt)
+                    let pauseEnd = min(min(pause.endedAt ?? now, endOfDay), session.endedAt ?? now)
+                    return pausedTotal + max(0, pauseEnd.timeIntervalSince(pauseStart))
+                }
+                return total + max(0, end.timeIntervalSince(start) - paused)
             }
     }
 
@@ -86,7 +121,10 @@ final class ActivityStore: ObservableObject {
     }
 
     func clearHistory() {
-        sessions = [ActivitySession(state: currentState, startedAt: Date())]
+        let date = Date()
+        let pauses = isPaused ? [ActivityPause(startedAt: date)] : nil
+        sessions = [ActivitySession(state: currentState, startedAt: date, pauses: pauses)]
+        now = date
         save()
     }
 

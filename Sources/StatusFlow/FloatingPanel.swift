@@ -100,17 +100,31 @@ struct FloatingPillView: View {
             pillBackground
 
             if allowsStateSelection {
-                stateMenu
-                .frame(
-                    width: max(32, Self.buttonSize * renderScale),
-                    height: max(32, Self.buttonSize * renderScale)
-                )
+                HStack(spacing: 6 * renderScale) {
+                    pauseButton
+                        .frame(
+                            width: max(32, Self.buttonSize * renderScale),
+                            height: max(32, Self.buttonSize * renderScale)
+                        )
+                    stateMenu
+                        .frame(
+                            width: max(32, Self.buttonSize * renderScale),
+                            height: max(32, Self.buttonSize * renderScale)
+                        )
+                }
                 .padding(.trailing, 12 * renderScale)
             }
         }
         .background(.ultraThinMaterial.opacity(settings.opacity))
         .clipShape(Capsule())
         .overlay(Capsule().strokeBorder(.white.opacity(0.18)))
+        .contextMenu {
+            if allowsStateSelection {
+                stateActions
+                Divider()
+                pauseAction
+            }
+        }
     }
 
     private var pillBackground: some View {
@@ -119,8 +133,14 @@ struct FloatingPillView: View {
                 .font(.system(size: 20 * renderScale, weight: .semibold))
                 .foregroundStyle(store.currentState.color)
             VStack(alignment: .leading, spacing: 2 * renderScale) {
-                Text(store.currentState.title)
-                    .font(.system(size: 13 * renderScale, weight: .semibold))
+                HStack(spacing: 4 * renderScale) {
+                    Text(store.currentState.title)
+                    if store.isPaused {
+                        Image(systemName: "pause.fill")
+                            .font(.system(size: 8 * renderScale, weight: .bold))
+                    }
+                }
+                .font(.system(size: 13 * renderScale, weight: .semibold))
                 Text(ActivityStore.clockDuration(store.currentElapsed))
                     .font(.system(size: 11 * renderScale, design: .monospaced))
                     .foregroundStyle(.secondary)
@@ -128,7 +148,7 @@ struct FloatingPillView: View {
             Spacer()
         }
         .padding(.leading, 18 * renderScale)
-        .padding(.trailing, (allowsStateSelection ? 54 : 18) * renderScale)
+        .padding(.trailing, (allowsStateSelection ? 90 : 18) * renderScale)
         .frame(
             width: Self.size(scale: renderScale).width,
             height: Self.size(scale: renderScale).height
@@ -138,14 +158,7 @@ struct FloatingPillView: View {
 
     private var stateMenu: some View {
         Menu {
-            ForEach(ActivityState.allCases) { state in
-                Button {
-                    store.switchTo(state)
-                } label: {
-                    Label(state.title, systemImage: state == store.currentState ? "checkmark" : state.symbol)
-                }
-                .disabled(state == store.currentState)
-            }
+            stateActions
         } label: {
             Image(systemName: "chevron.up.chevron.down")
                 .font(.system(size: 10 * renderScale, weight: .bold))
@@ -162,6 +175,48 @@ struct FloatingPillView: View {
         .buttonStyle(.plain)
         .help("切換狀態")
         .accessibilityLabel("切換目前狀態")
+    }
+
+    private var pauseButton: some View {
+        Button {
+            store.togglePause()
+        } label: {
+            Image(systemName: store.isPaused ? "play.fill" : "pause.fill")
+                .font(.system(size: 10 * renderScale, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(
+                    width: Self.buttonSize * renderScale,
+                    height: Self.buttonSize * renderScale
+                )
+                .background(.primary.opacity(0.07), in: Circle())
+                .overlay(Circle().strokeBorder(.primary.opacity(0.12)))
+        }
+        .buttonStyle(.plain)
+        .help(store.isPaused ? "繼續計時" : "暫停計時")
+        .accessibilityLabel(store.isPaused ? "繼續目前時段" : "暫停目前時段")
+    }
+
+    @ViewBuilder
+    private var stateActions: some View {
+        ForEach(ActivityState.allCases) { state in
+            Button {
+                store.switchTo(state)
+            } label: {
+                Label(state.title, systemImage: state == store.currentState ? "checkmark" : state.symbol)
+            }
+            .disabled(state == store.currentState)
+        }
+    }
+
+    private var pauseAction: some View {
+        Button {
+            store.togglePause()
+        } label: {
+            Label(
+                store.isPaused ? "繼續計時" : "暫停計時",
+                systemImage: store.isPaused ? "play.fill" : "pause.fill"
+            )
+        }
     }
 }
 

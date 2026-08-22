@@ -22,6 +22,15 @@ struct MenuBarView: View {
                 Text(ActivityStore.clockDuration(store.currentElapsed))
                     .font(.system(.title3, design: .monospaced, weight: .semibold))
                     .contentTransition(.numericText())
+                Button {
+                    store.togglePause()
+                } label: {
+                    Image(systemName: store.isPaused ? "play.fill" : "pause.fill")
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.bordered)
+                .help(store.isPaused ? "繼續計時" : "暫停計時")
+                .accessibilityLabel(store.isPaused ? "繼續目前時段" : "暫停目前時段")
             }
 
             HStack(spacing: 8) {

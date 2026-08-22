@@ -37,4 +37,10 @@ struct ActivitySession: Codable, Identifiable, Equatable {
     var state: ActivityState
     var startedAt: Date
     var endedAt: Date?
+    var pauses: [ActivityPause]?
+}
+
+struct ActivityPause: Codable, Equatable {
+    var startedAt: Date
+    var endedAt: Date?
 }
