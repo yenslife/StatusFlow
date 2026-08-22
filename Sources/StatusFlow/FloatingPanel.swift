@@ -144,6 +144,8 @@ struct FloatingPillView: View {
                 Text(ActivityStore.clockDuration(store.currentElapsed))
                     .font(.system(size: 11 * renderScale, design: .monospaced))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             Spacer()
         }
@@ -167,8 +169,8 @@ struct FloatingPillView: View {
                     width: Self.buttonSize * renderScale,
                     height: Self.buttonSize * renderScale
                 )
-                .background(store.currentState.color.opacity(0.16), in: Circle())
-                .overlay(Circle().strokeBorder(store.currentState.color.opacity(0.35)))
+                .background(.primary.opacity(0.07), in: Circle())
+                .overlay(Circle().strokeBorder(.primary.opacity(0.12)))
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
